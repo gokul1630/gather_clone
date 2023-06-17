@@ -62,6 +62,43 @@ class Player {
       this.player.setVelocityY(0);
       this.player.setVelocityX(0);
 
+      if(cursors.up.isDown == true && cursors.left.isDown == true) {
+        this.player.setVelocity(-100, -100); //-100, -100
+        this.player.anims.play('move-left', true);
+    }
+
+    else if(cursors.up.isDown == true && cursors.right.isDown == true) {
+        this.player.setVelocity(100, -100);  //100, -100
+        this.player.anims.play('move-right', true);
+    }
+
+    else if(cursors.down.isDown == true && cursors.left.isDown == true) {
+        this.player.setVelocity(-100, 100); //-100, 100
+        this,player.anims.play('move-left', true);
+    }
+
+    else if(cursors.down.isDown == true && cursors.right.isDown == true) {
+        this.player.setVelocity(100, 100); //100, 100
+        this.player.anims.play('move-right', true);
+    }
+
+    else if(cursors.up.isDown == true) {
+        this.player.setVelocityY(-100);
+        this.player.anims.play('move-up', true);
+    }
+    else if(cursors.down.isDown == true) {
+        this.player.setVelocityY(100);
+        this.player.anims.play('move-down', true);
+    }
+    else if(cursors.right.isDown == true) {
+        this.player.setVelocityX(100);
+        this.player.anims.play('move-right', true);
+    }
+    else if(cursors.left.isDown == true) {
+        this.player.setVelocityX(-100);
+        this.player.anims.play('move-left', true);
+    }
+
       if (cursors.up.isDown) {
         this.player.setVelocityY(-100);
       }
@@ -82,10 +119,12 @@ function preload() {
   this.load.image("player", "./assets/gather_character/Idle_front_view.png");
   this.load.image("tiles", "./assets/maps/tileset.png");
   this.load.tilemapTiledJSON("map", "./assets/maps/gameMap.json");
-  this.load.spritesheet("player", "./assets/gather_character/Idle.png", {
+  this.load.spritesheet("player-idle", "./assets/gather_character/Idle.png", {
     frameWidth: 32,
-    frameHeight: 32,
-  });
+    frameHeight: 32});
+this.load.spritesheet("player-move", "./assets/gather_character/Walk.png", {
+    frameWidth: 32,
+    frameHeight: 32});
 }
 
 function create() {
@@ -96,37 +135,49 @@ function create() {
   treesLayer.setCollisionBetween(30, 31, 32, 33, 34, 35, 39, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52, 53);
 
 
-
-  this.anims.create({
-    key: "left",
-    frames: this.anims.generateFrameNumbers("player", { start: 3, end: 5 }),
-    frameRate: 10,
-    repeat: -1,
-  });
-
-  this.anims.create({
-    key: "right",
-    frames: this.anims.generateFrameNumbers("player", { start: 9, end: 11 }),
-    frameRate: 10,
-    repeat: -1,
-  });
-
-  this.anims.create({
-    key: "up",
-    frames: this.anims.generateFrameNumbers("player", { start: 0, end: 2 }),
-    frameRate: 10,
-    repeat: -1,
-  });
-
-  this.anims.create({
-    key: "down",
-    frames: this.anims.generateFrameNumbers("player", { start: 6, end: 8 }),
-    frameRate: 10,
-    repeat: -1,
-  });
-
   cursors = this.input.keyboard.createCursorKeys();
 
+  this.anims.create({
+    key: 'move-left',
+    frames: this.anims.generateFrameNumbers('player-move', { start: 15, end: 18 }),
+    frameRate: 10,
+    repeat: 0,
+    duration: 100
+  });
+  
+  this.anims.create({
+    key: 'move-up',
+    frames: this.anims.generateFrameNumbers('player-move', { start: 5, end: 8 }),
+    frameRate: 10,
+    repeat: 0,
+    duration: 100
+  });
+
+  this.anims.create({
+    key: 'move-right',
+    frames: this.anims.generateFrameNumbers('player-move', { start: 10, end: 13 }),
+    frameRate: 10,
+    repeat: 0,
+    duration: 100
+  });
+
+
+  this.anims.create({
+    key: 'move-down',
+    frames: this.anims.generateFrameNumbers('player-move', { start: 0, end: 3 }),
+    frameRate: 10,
+    repeat: 0,
+    duration: 100
+  });
+
+  this.anims.create({
+  key: 'down-idle',
+  frames: this.anims.generateFrameNumbers('player-idle', { start: 0, end: 1 }),
+  frameRate: 3,
+  repeat: -1
+  });
+
+  
   // Set up the camera to follow the player
   this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
   currentPlayer = new Player(this.physics, this.cameras, treesLayer, 100, 200, "gokul")
@@ -153,6 +204,18 @@ const createMessage = (message, user) => {
   list.appendChild(listItem)
 }
 
+const moveDirection = ()=>{
+  if(cursors.up.isDown){
+return "move-up"
+  }else if(cursors.down.isDown){
+    return "move-down"
+  } else if(cursors.left.isDown){
+    return "move-left"
+  } else{
+    return "move-right"
+  }
+}
+
 function update() {
   currentPlayer.update(currentUser);
   player2.update("");
@@ -175,8 +238,8 @@ function update() {
     })
     if(!collision){
       sendBtn.removeEventListener('click',{})
-    } 
-  } 
+    }
+  }
   if(collisionFlag){
     chatBox.className ='block'
   } else{
@@ -185,19 +248,20 @@ function update() {
 
   if(cursors.up.isDown || cursors.down.isDown || cursors.left.isDown || cursors.right.isDown){
     if(currentUser!=='anuvindh'){
-      socket.emit('movement',{x:currentPlayer.player.x,y:currentPlayer.player.y, player: currentPlayer.player.x,player:currentPlayer.player.playerId})
+      socket.emit('movement',{x:currentPlayer.player.x,y:currentPlayer.player.y, player: currentPlayer.player.x,player:currentPlayer.player.playerId,move:moveDirection()})
     }else{
-      socket.emit('movement',{x:player2.player.x,y:player2.player.y, player: player2.player.x,player:player2.player.playerId})
+      socket.emit('movement',{x:player2.player.x,y:player2.player.y, player: player2.player.x,player:player2.player.playerId,move:moveDirection()})
     }
   }
-
 }
 socket.on(`movement`,(event)=>{
   if(event.player!==currentUser){
     if(event.player==='gokul'){
       currentPlayer.player.setPosition(event.x,event.y)
+      currentPlayer.player.anims.play(event.move, true);
     }else{
       player2.player.setPosition(event.x,event.y)
+      player2.player.anims.play(event.move, true);
     }
   }else{
   }
