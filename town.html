@@ -9,17 +9,22 @@
         <script src="https://cdn.tailwindcss.com" defer></script>
         <script src="gather_game.js" defer></script>
         <title>Gather Clone</title>
+        <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     </head>
-    
-    <body class='flex justify-end gap-10 flex-row-reverse'>
-        <div class="w-[300px] hidden " id='chatbox' style=''>
-            <ul class="chat-list overflow-y-auto h-[calc(100vh-250px)] bg-blue-300 my-2 box-border rounded-lg">
-            </ul>
-            <label class="flex w-full h-10">
-                <input class="bg-blue-200 rounded-md w-full px-2" type="text" id="messageBox">
-                <button class="ml-2 bg-blue-500 text-white px-2 rounded-md" id='submitBtn'>Send</button>
-            </label>
+
+    <body>
+        <div class='flex justify-start gap-10 flex-row'>
+            <canvas id="game-area"></canvas>
+            <div class="w-[300px] hidden " id='chatbox'>
+                <ul class="chat-list overflow-y-auto h-[calc(100vh-250px)] bg-blue-300 my-2 box-border rounded-lg">
+                </ul>
+                <label class="flex w-full h-10">
+                    <input class="bg-blue-200 rounded-md w-full px-2" type="text" id="messageBox">
+                    <button class="ml-2 bg-blue-500 text-white px-2 rounded-md" id='submitBtn'>Send</button>
+                </label>
+            </div>
         </div>
+        <video autoplay class="w-[400px] h-[200px]"></video>
         <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     </body>
 
