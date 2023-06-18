@@ -16,8 +16,8 @@ const socket = io("ws://localhost:8081");
 var config = {
   type: Phaser.CANVAS,
   canvas: document.getElementById('game-area'),
-  width: 1080,
-  height: 600,
+  height: window.innerHeight,
+  width: window.innerWidth - 20,
   physics: {
     default: "arcade",
     arcade: {
@@ -35,8 +35,7 @@ var config = {
 const game = new Phaser.Game(config);
 
 var map;
-let currentPlayer;
-let player2;
+let players = [];
 var cursors;
 let physics, cameras, treesLayer
 
@@ -171,15 +170,19 @@ function create() {
 
   // Set up the camera to follow the player
   this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-  currentPlayer = new Player(this.physics, this.cameras, treesLayer, 100, 200, "gokul")
-  this.cameras.main.startFollow(currentPlayer);
-
-  player2 = new Player(this.physics, this.cameras, treesLayer, 200, 300, "anuvindh")
-
+  players = [
+    new Player(this.physics, this.cameras, treesLayer, 300, 500, "gokul"),
+    new Player(this.physics, this.cameras, treesLayer, 400, 500, "anuvindh"),
+    new Player(this.physics, this.cameras, treesLayer, 500, 500, "anu1"),
+    new Player(this.physics, this.cameras, treesLayer, 600, 500, "anu2"),
+    new Player(this.physics, this.cameras, treesLayer, 700, 500, "anu3"),
+    new Player(this.physics, this.cameras, treesLayer, 800, 500, "anu4")
+  ]
 
 }
 
 let collisionFlag = false
+let collision = false
 
 const createMessage = (message, user) => {
   const listItem = document.createElement("li")
@@ -209,10 +212,22 @@ const moveDirection = () => {
 }
 
 function update() {
-  currentPlayer.update();
-  player2.update();
+  players.forEach((player) => {
+    player.update()
+    // player.player.setCollideWorldBounds(true)
+  })
 
-  collision = checkCollision(player2.player, currentPlayer.player);
+  const collidedUsers = new Set()
+
+  players.forEach(playerOne => players.forEach(playerTwo => {
+    if (playerOne.player !== playerTwo.player && checkCollision(playerOne.player, playerTwo.player)) {
+      collision = checkCollision(playerOne.player, playerTwo.player)
+      collidedUsers.add(playerOne.player.playerId)
+      collidedUsers.add(playerTwo.player.playerId)
+    }
+  }))
+
+  const users = [...collidedUsers.keys()].filter(user => user !== currentUser).map(user => ({ from: currentUser, to: user }))
 
   if (collision !== collisionFlag) {
     collisionFlag = collision;
@@ -220,58 +235,57 @@ function update() {
       createMessage(event.message, event.user)
     })
 
-      peer = new Peer({
-        host: "localhost",
-        port: 9000,
-        path: "/myapp",
-      });
+    // peer = new Peer({
+    //   host: "localhost",
+    //   port: 9000,
+    //   path: "/myapp",
+    // });
     sendBtn.addEventListener('click', () => {
       if (messageBox.value) {
-        socket.emit('chat', { message: messageBox.value, users: [{ from: currentUser, to: currentUser === 'anuvindh' ? 'gokul' : 'anuvindh' }] })
+        socket.emit('chat', { message: messageBox.value, users })
         createMessage(messageBox.value, currentUser)
       }
     })
     if (!collision) {
       sendBtn.removeEventListener('click', {})
-
     } else {
-      peer.on('open', (peerId) => {
-        socket.emit("peer-id", { peerId, currentUser })
-      })
+      // peer.on('open', (peerId) => {
+      //   socket.emit("peer-id", { peerId, currentUser })
+      // })
 
-      socket.on('peer-id', (event) => {
-        if (currentUser !== event.currentUser) {
-          if (hasUserMedia()) {
-            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia
-              || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+      // socket.on('peer-id', (event) => {
+      //   if (currentUser !== event.currentUser) {
+      //     if (hasUserMedia()) {
+      //       navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia
+      //         || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
-            navigator.getUserMedia({ video: true, audio: true }, function (stream) {
-              const video = document.querySelector('video');
-              video.srcObject = stream;
-              peer.call(event.peerId, stream)
+      //       navigator.getUserMedia({ video: true, audio: true }, function (stream) {
+      //         const video = document.querySelector('video');
+      //         video.srcObject = stream;
+      //         peer.call(event.peerId, stream)
 
-            }, function (err) {
-              console.log(err)
-            });
+      //       }, function (err) {
+      //         console.log(err)
+      //       });
 
-          }
-        } else {
-          if (hasUserMedia()) {
-            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia
-              || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+      //     }
+      //   } else {
+      //     if (hasUserMedia()) {
+      //       navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia
+      //         || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
-            navigator.getUserMedia({ video: true, audio: true }, function (stream) {
-              const video = document.querySelector('video');
-              video.srcObject = stream;
-              peer.on('call', (call) => {
-                call.answer(event.peerId)
-              })
-            }, function (err) {
-              console.log(err)
-            });
-          }
-        }
-      })
+      //       navigator.getUserMedia({ video: true, audio: true }, function (stream) {
+      //         const video = document.querySelector('video');
+      //         video.srcObject = stream;
+      //         peer.on('call', (call) => {
+      //           call.answer(event.peerId)
+      //         })
+      //       }, function (err) {
+      //         console.log(err)
+      //       });
+      //     }
+      //   }
+      // })
     }
   }
   if (collisionFlag) {
@@ -281,23 +295,21 @@ function update() {
   }
 
   if (cursors.up.isDown || cursors.down.isDown || cursors.left.isDown || cursors.right.isDown) {
-    if (currentUser !== 'anuvindh') {
-      socket.emit('movement', { x: currentPlayer.player.x, y: currentPlayer.player.y, player: currentPlayer.player.x, player: currentPlayer.player.playerId, move: moveDirection() })
-    } else {
-      socket.emit('movement', { x: player2.player.x, y: player2.player.y, player: player2.player.x, player: player2.player.playerId, move: moveDirection() })
-    }
+    players.forEach(player => {
+      if (player.player.playerId === currentUser) {
+        socket.emit('movement', { x: player.player.x, y: player.player.y, player: player.player.x, player: player.player.playerId, move: moveDirection() })
+      }
+    })
   }
 }
 socket.on(`movement`, (event) => {
-  if (event.player !== currentUser) {
-    if (event.player === 'gokul') {
-      currentPlayer.player.setPosition(event.x, event.y)
-      currentPlayer.player.anims.play(event.move, true);
-    } else {
-      player2.player.setPosition(event.x, event.y)
-      player2.player.anims.play(event.move, true);
+  players.forEach(player => {
+    const playerId = player.player.playerId;
+    if (playerId === event.player && event.player !== currentUser) {
+      player.player.setPosition(event.x, event.y)
+      player.player.anims.play(event.move, true);
     }
-  }
+  })
 }
 )
 
