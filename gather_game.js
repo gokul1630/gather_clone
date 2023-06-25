@@ -2,14 +2,17 @@ const list = document.querySelector(".chat-list");
 const messageBox = document.querySelector('#messageBox');
 const sendBtn = document.querySelector('#submitBtn');
 const chatBox = document.querySelector('#chatbox');
-let user = JSON.parse(window.localStorage.getItem("user"))
+let user = JSON.parse(window.localStorage.getItem("user"));
+const video = document.querySelector('video');
+const answerVideo = document.querySelector('.answer');
+const callBtn = document.querySelector('.call');
+const endBtn = document.querySelector('.end');
 
-window.onload=()=>{
-  if(!user) window.location.href='index.html'
+window.onload = () => {
+  if (!user) window.location.href = 'index.html'
 }
 
 const currentUser = user?.userId
-let peer
 var map;
 const players = {}
 var cursors;
@@ -19,19 +22,20 @@ let users = []
 messageBox.placeholder = `Hi ${user?.user}, Type Something...`
 
 const messageClass = "flex w-auto"
-const socket = io("ws://localhost:8081"); 
+const socket = io("https://20d4-116-73-174-211.ngrok-free.app");
+const peer = new Peer(currentUser);
 
 var config = {
-      type: Phaser.CANVAS,
-      canvas: document.getElementById('game-area'),
-      height: window.innerHeight,
-      width: window.innerWidth - 20,
-      physics: {
-        default: "arcade",
-        arcade: {
-          gravity: { y: 0 },
-          debug: false,
-        },
+  type: Phaser.CANVAS,
+  canvas: document.getElementById('game-area'),
+  height: window.innerHeight,
+  width: window.innerWidth - 20,
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { y: 0 },
+      debug: false,
+    },
   },
   scene: {
     preload,
@@ -48,9 +52,9 @@ class Player {
   cameras
   player
   user
-  constructor(scene, camera, treesLayer, x, y, user) {
+  constructor (scene, camera, treesLayer, x, y, user) {
     if (scene && camera && treesLayer && user) {
-      
+
       this.user = user
       this.cameras = camera
       this.physics = scene
@@ -61,32 +65,32 @@ class Player {
       this.cameras.main.startFollow(this.player);
     }
   }
-  
+
   update() {
     if (this.user === currentUser) {
       this.player.setVelocityY(0);
       this.player.setVelocityX(0);
-      
+
       if (cursors.up.isDown == true && cursors.left.isDown == true) {
         this.player.setVelocity(-100, -100); //-100, -100
         this.player.anims.play('move-left', true);
       }
-      
+
       else if (cursors.up.isDown == true && cursors.right.isDown == true) {
         this.player.setVelocity(100, -100);  //100, -100
         this.player.anims.play('move-right', true);
       }
-      
+
       else if (cursors.down.isDown == true && cursors.left.isDown == true) {
         this.player.setVelocity(-100, 100); //-100, 100
         this, player.anims.play('move-left', true);
       }
-      
+
       else if (cursors.down.isDown == true && cursors.right.isDown == true) {
         this.player.setVelocity(100, 100); //100, 100
         this.player.anims.play('move-right', true);
       }
-      
+
       else if (cursors.up.isDown == true) {
         this.player.setVelocityY(-100);
         this.player.anims.play('move-up', true);
@@ -122,28 +126,28 @@ function preload() {
 }
 
 async function create() {
-  socket.emit('newUser',currentUser)
+  socket.emit('newUser', currentUser)
   map = this.make.tilemap({ key: "map", tileWidth: 100, tileHeight: 100 });
   var tileset = map.addTilesetImage("game_tiles", "tiles");
   var groundLayer = map.createLayer("GroundLayer", tileset, 0, 0);
   var treesLayer = map.createLayer("TreesLayer", tileset, 0, 0);
   treesLayer.setCollisionBetween(30, 31, 32, 33, 34, 35, 39, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52, 53);
 
-  await socket.on('newUser',async (data) => {
-    const {user,moves}=data
-    if(this.physics && this.cameras && treesLayer && !players[user]){
-      if(moves){
-        const newUser = new Player(this.physics, this.cameras, treesLayer, moves.x ?? (Math.floor(Math.random()*100)) + 300 , moves.y ?? 500, user)
+  await socket.on('newUser', async (data) => {
+    const { user, moves } = data
+    if (this.physics && this.cameras && treesLayer && !players[user]) {
+      if (moves) {
+        const newUser = new Player(this.physics, this.cameras, treesLayer, moves.x ?? (Math.floor(Math.random() * 100)) + 300, moves.y ?? 500, user)
         newUser.player.anims.play(moves.move, true);
         players[user] = newUser
         return;
       }
-      players[user] = new Player(this.physics, this.cameras, treesLayer, (Math.floor(Math.random()*100)) + 300 ,  500, user)
+      players[user] = new Player(this.physics, this.cameras, treesLayer, (Math.floor(Math.random() * 100)) + 300, 500, user)
     }
   })
 
   cursors = this.input.keyboard.createCursorKeys();
-  
+
   this.anims.create({
     key: 'move-left',
     frames: this.anims.generateFrameNumbers('player-move', { start: 15, end: 18 }),
@@ -151,7 +155,7 @@ async function create() {
     repeat: 0,
     duration: 100
   });
-  
+
   this.anims.create({
     key: 'move-up',
     frames: this.anims.generateFrameNumbers('player-move', { start: 5, end: 8 }),
@@ -159,7 +163,7 @@ async function create() {
     repeat: 0,
     duration: 100
   });
-  
+
   this.anims.create({
     key: 'move-right',
     frames: this.anims.generateFrameNumbers('player-move', { start: 10, end: 13 }),
@@ -167,8 +171,8 @@ async function create() {
     repeat: 0,
     duration: 100
   });
-  
-  
+
+
   this.anims.create({
     key: 'move-down',
     frames: this.anims.generateFrameNumbers('player-move', { start: 0, end: 3 }),
@@ -176,15 +180,15 @@ async function create() {
     repeat: 0,
     duration: 100
   });
-  
+
   this.anims.create({
     key: 'down-idle',
     frames: this.anims.generateFrameNumbers('player-idle', { start: 0, end: 1 }),
     frameRate: 3,
     repeat: -1
   });
-  
-  
+
+
   // Set up the camera to follow the player
   this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
@@ -221,91 +225,50 @@ const moveDirection = () => {
 }
 
 function update() {
-  
+
   Object.values(players).forEach((player) => {
     player.update()
     // player.player.setCollideWorldBounds(true)
   })
-  
+
   const collidedUsers = new Set()
 
-if(Object.values(players).length){
-  Object.values(players).forEach(playerOne => Object.values(players).forEach(playerTwo => {
-    if (playerOne.player !== playerTwo.player && checkCollision(playerOne.player, playerTwo.player)) {
-      collision = checkCollision(playerOne.player, playerTwo.player)
-      collidedUsers.add(playerOne.player.playerId)
-      collidedUsers.add(playerTwo.player.playerId)
-    }
-  }))
-}
-  
-  const users = [...collidedUsers.keys()].filter(user => user !== currentUser).map(user => ({ from: currentUser, to: user }))
-  
+  if (Object.values(players).length) {
+    Object.values(players).forEach(playerOne => Object.values(players).forEach(playerTwo => {
+      if (playerOne.player !== playerTwo.player && checkCollision(playerOne.player, playerTwo.player)) {
+        collision = checkCollision(playerOne.player, playerTwo.player)
+        collidedUsers.add(playerOne.player.playerId)
+        collidedUsers.add(playerTwo.player.playerId)
+      }
+    }))
+  }
+
+  users = [...collidedUsers.keys()].filter(user => user !== currentUser).map(user => ({ from: currentUser, to: user }))
+
   if (collision !== collisionFlag) {
     collisionFlag = collision;
     socket.on(currentUser, (event) => {
       createMessage(event.message, event.user)
     })
-    
-    // peer = new Peer({
-      //   host: "localhost",
-      //   port: 9000,
-      //   path: "/myapp",
-      // });
-      sendBtn.addEventListener('click', () => {
-        if (messageBox.value) {
-          socket.emit('chat', { message: messageBox.value, users })
-          createMessage(messageBox.value, currentUser)
-        }
-      })
-      if (!collision) {
-        sendBtn.removeEventListener('click', {})
-      } else {
-        // peer.on('open', (peerId) => {
-          //   socket.emit("peer-id", { peerId, currentUser })
-          // })
-          
-          // socket.on('peer-id', (event) => {
-            //   if (currentUser !== event.currentUser) {
-              //     if (hasUserMedia()) {
-                //       navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia
-                //         || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-                
-                //       navigator.getUserMedia({ video: true, audio: true }, function (stream) {
-                  //         const video = document.querySelector('video');
-                  //         video.srcObject = stream;
-                  //         peer.call(event.peerId, stream)
-                  
-      //       }, function (err) {
-      //         console.log(err)
-      //       });
-      
-      //     }
-      //   } else {
-        //     if (hasUserMedia()) {
-      //       navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia
-      //         || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-      
-      //       navigator.getUserMedia({ video: true, audio: true }, function (stream) {
-        //         const video = document.querySelector('video');
-        //         video.srcObject = stream;
-        //         peer.on('call', (call) => {
-          //           call.answer(event.peerId)
-          //         })
-          //       }, function (err) {
-            //         console.log(err)
-      //       });
-      //     }
-      //   }
-      // })
+
+    sendBtn.addEventListener('click', () => {
+      if (messageBox.value) {
+        socket.emit('chat', { message: messageBox.value, users })
+        createMessage(messageBox.value, currentUser)
+      }
+    })
+    if (!collision) {
+      sendBtn.removeEventListener('click', {})
     }
   }
   if (collisionFlag) {
     chatBox.className = 'block'
+    callBtn.className = 'block'
   } else {
     chatBox.className = 'hidden'
+    // callBtn.className = 'hidden'
   }
-  
+
   if (cursors.up.isDown || cursors.down.isDown || cursors.left.isDown || cursors.right.isDown) {
     Object.values(players).forEach(player => {
       if (player.player.playerId === currentUser) {
@@ -330,32 +293,93 @@ function checkCollision(object1, object2) {
   var distanceX = object1.x - object2.x;
   var distanceY = object1.y - object2.y;
   var distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-  
+
   // Check if the distance is less than the sum of the object sizes (assuming square objects)
   var objectSize = object1.width; // Assuming both objects have the same size
   var collisionDistance = objectSize * 2;
-  
+
   return distance < collisionDistance
 }
 
 
 function hasUserMedia() {
-  navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia
-  || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-  return !!navigator.getUserMedia;
+  return navigator.mediaDevices.getUserMedia;
 }
 
 
-socket.on('removeUser',(data)=>{
+socket.on('removeUser', (data) => {
   window.location.reload();
 })
 
 const clr = document.querySelector(".clr");
 const userss = document.querySelector("#user");
 
-userss.innerText = JSON.parse(window.localStorage.getItem('user')).userId
-
-clr.addEventListener('click',()=>{
+userss.innerText = peer.id
+clr.addEventListener('click', () => {
   localStorage.clear()
   window.location.reload()
 })
+
+video.addEventListener('click', () => {
+  if (video.requestFullscreen) {
+    video.requestFullscreen()
+  }
+})
+
+let call = false
+let outgoingCall
+callBtn.addEventListener('click', () => {
+  const mediaDevice = navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+  call = !call
+
+  if (peer && call && hasUserMedia()) {
+
+    video.className = 'w-[400px] h-[200px] absolute top-10 left-10 rounded-lg bg-black z-10 block'
+    answerVideo.className = 'w-[400px] h-[200px] absolute top-10 right-10 rounded-lg bg-yellow-100 z-10 block'
+
+    mediaDevice.then(stream => {
+      window.localStream = stream
+      video.srcObject = stream;
+
+      if (users) {
+        outgoingCall = peer.call(users[0].to, stream)
+        outgoingCall.on('stream', (data) => answerVideo.srcObject = data)
+      }
+
+    }).catch(console.log)
+  }
+})
+
+peer.on('call', (call) => {
+  const mediaDevice = navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+
+  mediaDevice.then(stream => {
+    window.localStream = stream
+    video.srcObject = stream
+
+    answerVideo.className = 'w-[400px] h-[200px] absolute top-10 right-10 rounded-lg bg-yellow-100 z-10 block'
+    video.className = 'w-[400px] h-[200px] absolute top-10 left-10 rounded-lg bg-black z-10 block'
+
+    call.answer(stream)
+    call.on('stream', (e) => {
+      answerVideo.srcObject = e
+    })
+    call.on('close', (e) => {
+      console.log('closed')
+    })
+  }).catch(console.log)
+})
+
+endBtn.addEventListener('click', () => {
+  video.className = 'w-[400px] h-[200px] absolute top-10 left-10 rounded-lg bg-black z-10 hidden'
+  answerVideo.className = 'w-[400px] h-[200px] absolute top-10 right-10 rounded-lg bg-yellow-100 z-10 hidden'
+  localStream.getTracks().forEach(track => track.stop())
+
+})
+video.className = 'w-[400px] h-[200px] absolute top-10 left-10 rounded-lg bg-black z-10 hidden'
+answerVideo.className = 'w-[400px] h-[200px] absolute top-10 right-10 rounded-lg bg-yellow-100 z-10 hidden'
+
+peer.on('disconnected', () => {
+  console.log('Connection to Peer server lost');
+  // Perform any necessary actions when the connection is closed
+});
