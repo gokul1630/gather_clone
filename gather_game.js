@@ -121,18 +121,27 @@ function preload() {
   });
 }
 
-function create() {
+async function create() {
   socket.emit('newUser',currentUser)
   map = this.make.tilemap({ key: "map", tileWidth: 100, tileHeight: 100 });
   var tileset = map.addTilesetImage("game_tiles", "tiles");
   var groundLayer = map.createLayer("GroundLayer", tileset, 0, 0);
   var treesLayer = map.createLayer("TreesLayer", tileset, 0, 0);
   treesLayer.setCollisionBetween(30, 31, 32, 33, 34, 35, 39, 40, 41, 42, 43, 44, 48, 49, 50, 51, 52, 53);
-  
-  if(this.physics && this.cameras && treesLayer){
-    players[currentUser] = new Player(this.physics, this.cameras, treesLayer, (Math.floor(Math.random()*100)) + 300, 500, currentUser);
-  }
-  
+
+  await socket.on('newUser',async (data) => {
+    const {user,moves}=data
+    if(this.physics && this.cameras && treesLayer && !players[user]){
+      if(moves){
+        const newUser = new Player(this.physics, this.cameras, treesLayer, moves.x ?? (Math.floor(Math.random()*100)) + 300 , moves.y ?? 500, user)
+        newUser.player.anims.play(moves.move, true);
+        players[user] = newUser
+        return;
+      }
+      players[user] = new Player(this.physics, this.cameras, treesLayer, (Math.floor(Math.random()*100)) + 300 ,  500, user)
+    }
+  })
+
   cursors = this.input.keyboard.createCursorKeys();
   
   this.anims.create({
@@ -178,14 +187,8 @@ function create() {
   
   // Set up the camera to follow the player
   this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-  
-  socket.on('newUser',async (user) => {
-    if(this.physics && this.cameras && treesLayer && !players[user]){
-      players[user] = new Player(this.physics, this.cameras, treesLayer, (Math.floor(Math.random()*100)) + 300 , 500, user)
-    }
-  })
-}
 
+}
 
 let collisionFlag = false
 let collision = false
@@ -218,6 +221,7 @@ const moveDirection = () => {
 }
 
 function update() {
+  
   Object.values(players).forEach((player) => {
     player.update()
     // player.player.setCollideWorldBounds(true)
@@ -341,9 +345,10 @@ function hasUserMedia() {
   return !!navigator.getUserMedia;
 }
 
-window.onclose=()=>{
-  socket.emit('removeUser', currentUser)
-}
+
+socket.on('removeUser',(data)=>{
+  window.location.reload();
+})
 
 const clr = document.querySelector(".clr");
 const userss = document.querySelector("#user");
