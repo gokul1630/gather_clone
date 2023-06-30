@@ -13,8 +13,12 @@
     </head>
 
     <body>
-        <div class='flex justify-start gap-10 flex-row'>
-            <canvas id="game-area"></canvas>
+        <button class="clr"> clear local storage</button>
+        <span id='user'></span>
+        <button class='call'>video call</button>
+        <button class='end'>end</button>
+        <div class='flex justify-start gap-10 flex-row box-border relative'>
+            <canvas class="rounded-lg absolute right-2 top-2" id="game-area"></canvas>
             <div class="w-[300px] hidden " id='chatbox'>
                 <ul class="chat-list overflow-y-auto h-[calc(100vh-250px)] bg-blue-300 my-2 box-border rounded-lg">
                 </ul>
@@ -24,7 +28,8 @@
                 </label>
             </div>
         </div>
-        <video autoplay class="w-[400px] h-[200px]"></video>
+        <video autoplay class="w-[400px] h-[200px] absolute top-10 left-10 rounded-lg bg-black z-10"></video>
+        <video class="answer" autoplay class="w-[400px] h-[200px] absolute top-10 right-10 rounded-lg bg-black z-10"></video>
         <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     </body>
 
