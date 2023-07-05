@@ -329,7 +329,7 @@ video.addEventListener('click', () => {
 let call = false
 let outgoingCall
 callBtn.addEventListener('click', () => {
-  const mediaDevice = navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+  const mediaDevice = navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   call = !call
 
   if (peer && call && hasUserMedia()) {
@@ -351,7 +351,7 @@ callBtn.addEventListener('click', () => {
 })
 
 peer.on('call', (call) => {
-  const mediaDevice = navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+  const mediaDevice = navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
   mediaDevice.then(stream => {
     window.localStream = stream
