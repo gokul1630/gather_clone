@@ -22,7 +22,7 @@ let users = []
 messageBox.placeholder = `Hi ${user?.user}, Type Something...`
 
 const messageClass = "flex w-auto"
-const socket = io("https://20d4-116-73-174-211.ngrok-free.app");
+const socket = io("https://dd05-3-109-129-91.ngrok-free.app");
 const peer = new Peer(currentUser);
 
 var config = {
