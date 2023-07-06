@@ -125,6 +125,11 @@ function preload() {
   });
 }
 
+socket.on('removeUser', (user) => {
+  players[user].player.destroy(true);
+  delete players[user];
+})
+
 async function create() {
   socket.emit('newUser', currentUser)
   map = this.make.tilemap({ key: "map", tileWidth: 100, tileHeight: 100 });
@@ -228,7 +233,7 @@ function update() {
 
   Object.values(players).forEach((player) => {
     player.update()
-    // player.player.setCollideWorldBounds(true)
+    player.player.setCollideWorldBounds(true)
   })
 
   const collidedUsers = new Set()
@@ -306,24 +311,12 @@ function hasUserMedia() {
   return navigator.mediaDevices.getUserMedia;
 }
 
-
-socket.on('removeUser', (data) => {
-  window.location.reload();
-})
-
 const clr = document.querySelector(".clr");
-const userss = document.querySelector("#user");
 
-userss.innerText = peer.id
+
 clr.addEventListener('click', () => {
   localStorage.clear()
   window.location.reload()
-})
-
-video.addEventListener('click', () => {
-  if (video.requestFullscreen) {
-    video.requestFullscreen()
-  }
 })
 
 let call = false
@@ -378,8 +371,3 @@ endBtn.addEventListener('click', () => {
 })
 video.className = 'w-[400px] h-[200px] absolute top-10 left-10 rounded-lg bg-black z-10 hidden'
 answerVideo.className = 'w-[400px] h-[200px] absolute top-10 right-10 rounded-lg bg-yellow-100 z-10 hidden'
-
-peer.on('disconnected', () => {
-  console.log('Connection to Peer server lost');
-  // Perform any necessary actions when the connection is closed
-});
